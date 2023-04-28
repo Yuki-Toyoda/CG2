@@ -206,7 +206,7 @@ ID3D12Resource* CreateBufferResource(ID3D12Device* device, size_t sizeInBytes) {
 	D3D12_RESOURCE_DESC vertexResourceDesc{};
 	// バッファリソース テクスチャの場合はまた別の設定を行う
 	vertexResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	vertexResourceDesc.Width = sizeof(Vector4) * 3; // リソースのサイズ　今回はVector4を3頂点分(怪しい)
+	vertexResourceDesc.Width = sizeInBytes; // リソースのサイズ　今回はVector4を3頂点分(怪しい)
 
 	// バッファの場合これらを1にする
 	vertexResourceDesc.Height = 1;
@@ -294,6 +294,116 @@ Matrix4x4 Multiply(const Matrix4x4& m1, const Matrix4x4& m2) {
 	result.m[1][3] = (m1.m[1][0] * m2.m[0][3]) + (m1.m[1][1] * m2.m[1][3]) + (m1.m[1][2] * m2.m[2][3]) + (m1.m[1][3] * m2.m[3][3]);
 	result.m[2][3] = (m1.m[2][0] * m2.m[0][3]) + (m1.m[2][1] * m2.m[1][3]) + (m1.m[2][2] * m2.m[2][3]) + (m1.m[2][3] * m2.m[3][3]);
 	result.m[3][3] = (m1.m[3][0] * m2.m[0][3]) + (m1.m[3][1] * m2.m[1][3]) + (m1.m[3][2] * m2.m[2][3]) + (m1.m[3][3] * m2.m[3][3]);
+
+	return result;
+
+}
+
+/// <summary>
+/// 逆行列
+/// </summary>
+/// <param name="m">計算する行列</param>
+/// <returns></returns>
+Matrix4x4 Inverse(const Matrix4x4& m) {
+
+	// 結果格納用
+	Matrix4x4 result = {};
+
+	// 行列式
+	float d;
+
+	// 行列式を求める
+	d = (m.m[0][0] * m.m[1][1] * m.m[2][2] * m.m[3][3]) +
+		(m.m[0][0] * m.m[1][2] * m.m[2][3] * m.m[3][1]) +
+		(m.m[0][0] * m.m[1][3] * m.m[2][1] * m.m[3][2]) -
+
+		(m.m[0][0] * m.m[1][3] * m.m[2][2] * m.m[3][1]) -
+		(m.m[0][0] * m.m[1][2] * m.m[2][1] * m.m[3][3]) -
+		(m.m[0][0] * m.m[1][1] * m.m[2][3] * m.m[3][2]) -
+
+		(m.m[0][1] * m.m[1][0] * m.m[2][2] * m.m[3][3]) -
+		(m.m[0][2] * m.m[1][0] * m.m[2][3] * m.m[3][1]) -
+		(m.m[0][3] * m.m[1][0] * m.m[2][1] * m.m[3][2]) +
+
+		(m.m[0][3] * m.m[1][0] * m.m[2][2] * m.m[3][1]) +
+		(m.m[0][2] * m.m[1][0] * m.m[2][1] * m.m[3][3]) +
+		(m.m[0][1] * m.m[1][0] * m.m[2][3] * m.m[3][2]) +
+
+		(m.m[0][1] * m.m[1][2] * m.m[2][0] * m.m[3][3]) +
+		(m.m[0][2] * m.m[1][3] * m.m[2][0] * m.m[3][1]) +
+		(m.m[0][3] * m.m[1][1] * m.m[2][0] * m.m[3][2]) -
+
+		(m.m[0][3] * m.m[1][2] * m.m[2][0] * m.m[3][1]) -
+		(m.m[0][2] * m.m[1][1] * m.m[2][0] * m.m[3][3]) -
+		(m.m[0][1] * m.m[1][3] * m.m[2][0] * m.m[3][2]) -
+
+		(m.m[0][1] * m.m[1][2] * m.m[2][3] * m.m[3][0]) -
+		(m.m[0][2] * m.m[1][3] * m.m[2][1] * m.m[3][0]) -
+		(m.m[0][3] * m.m[1][1] * m.m[2][2] * m.m[3][0]) +
+
+		(m.m[0][3] * m.m[1][2] * m.m[2][1] * m.m[3][0]) +
+		(m.m[0][2] * m.m[1][1] * m.m[2][3] * m.m[3][0]) +
+		(m.m[0][1] * m.m[1][3] * m.m[2][2] * m.m[3][0]);
+
+	// 計算処理
+	if (d != 0) {
+
+		result.m[0][0] = (1.0f / d) *
+			(m.m[1][1] * m.m[2][2] * m.m[3][3] + m.m[1][2] * m.m[2][3] * m.m[3][1] + m.m[1][3] * m.m[2][1] * m.m[3][2]
+				- m.m[1][3] * m.m[2][2] * m.m[3][1] - m.m[1][2] * m.m[2][1] * m.m[3][3] - m.m[1][1] * m.m[2][3] * m.m[3][2]);
+		result.m[0][1] = (1.0f / d) *
+			(-m.m[0][1] * m.m[2][2] * m.m[3][3] - m.m[0][2] * m.m[2][3] * m.m[3][1] - m.m[0][3] * m.m[2][1] * m.m[3][2]
+				+ m.m[0][3] * m.m[2][2] * m.m[3][1] + m.m[0][2] * m.m[2][1] * m.m[3][3] + m.m[0][1] * m.m[2][3] * m.m[3][2]);
+		result.m[0][2] = (1.0f / d) *
+			(+m.m[0][1] * m.m[1][2] * m.m[3][3] + m.m[0][2] * m.m[1][3] * m.m[3][1] + m.m[0][3] * m.m[1][1] * m.m[3][2]
+				- m.m[0][3] * m.m[1][2] * m.m[3][1] - m.m[0][2] * m.m[1][1] * m.m[3][3] - m.m[0][1] * m.m[1][3] * m.m[3][2]);
+		result.m[0][3] = (1.0f / d) *
+			(-m.m[0][1] * m.m[1][2] * m.m[2][3] - m.m[0][2] * m.m[1][3] * m.m[2][1] - m.m[0][3] * m.m[1][1] * m.m[2][2]
+				+ m.m[0][3] * m.m[1][2] * m.m[2][1] + m.m[0][2] * m.m[1][1] * m.m[2][3] + m.m[0][1] * m.m[1][3] * m.m[2][2]);
+
+
+		result.m[1][0] = (1.0f / d) *
+			(-m.m[1][0] * m.m[2][2] * m.m[3][3] - m.m[1][2] * m.m[2][3] * m.m[3][0] - m.m[1][3] * m.m[2][0] * m.m[3][2]
+				+ m.m[1][3] * m.m[2][2] * m.m[3][0] + m.m[1][2] * m.m[2][0] * m.m[3][3] + m.m[1][0] * m.m[2][3] * m.m[3][2]);
+		result.m[1][1] = (1.0f / d) *
+			(m.m[0][0] * m.m[2][2] * m.m[3][3] + m.m[0][2] * m.m[2][3] * m.m[3][0] + m.m[0][3] * m.m[2][0] * m.m[3][2]
+				- m.m[0][3] * m.m[2][2] * m.m[3][0] - m.m[0][2] * m.m[2][0] * m.m[3][3] - m.m[0][0] * m.m[2][3] * m.m[3][2]);
+		result.m[1][2] = (1.0f / d) *
+			(-m.m[0][0] * m.m[1][2] * m.m[3][3] - m.m[0][2] * m.m[1][3] * m.m[3][0] - m.m[0][3] * m.m[1][0] * m.m[3][2]
+				+ m.m[0][3] * m.m[1][2] * m.m[3][0] + m.m[0][2] * m.m[1][0] * m.m[3][3] + m.m[0][0] * m.m[1][3] * m.m[3][2]);
+		result.m[1][3] = (1.0f / d) *
+			(m.m[0][0] * m.m[1][2] * m.m[2][3] + m.m[0][2] * m.m[1][3] * m.m[2][0] + m.m[0][3] * m.m[1][0] * m.m[2][2]
+				- m.m[0][3] * m.m[1][2] * m.m[2][0] - m.m[0][2] * m.m[1][0] * m.m[2][3] - m.m[0][0] * m.m[1][3] * m.m[2][2]);
+
+
+		result.m[2][0] = (1.0f / d) *
+			(m.m[1][0] * m.m[2][1] * m.m[3][3] + m.m[1][1] * m.m[2][3] * m.m[3][0] + m.m[1][3] * m.m[2][0] * m.m[3][1]
+				- m.m[1][3] * m.m[2][1] * m.m[3][0] - m.m[1][1] * m.m[2][0] * m.m[3][3] - m.m[1][0] * m.m[2][3] * m.m[3][1]);
+		result.m[2][1] = (1.0f / d) *
+			(-m.m[0][0] * m.m[2][1] * m.m[3][3] - m.m[0][1] * m.m[2][3] * m.m[3][0] - m.m[0][3] * m.m[2][0] * m.m[3][1]
+				+ m.m[0][3] * m.m[2][1] * m.m[3][0] + m.m[0][1] * m.m[2][0] * m.m[3][3] + m.m[0][0] * m.m[2][3] * m.m[3][1]);
+		result.m[2][2] = (1.0f / d) *
+			(m.m[0][0] * m.m[1][1] * m.m[3][3] + m.m[0][1] * m.m[1][3] * m.m[3][0] + m.m[0][3] * m.m[1][0] * m.m[3][1]
+				- m.m[0][3] * m.m[1][1] * m.m[3][0] - m.m[0][1] * m.m[1][0] * m.m[3][3] - m.m[0][0] * m.m[1][3] * m.m[3][1]);
+		result.m[2][3] = (1.0f / d) *
+			(-m.m[0][0] * m.m[1][1] * m.m[2][3] - m.m[0][1] * m.m[1][3] * m.m[2][0] - m.m[0][3] * m.m[1][0] * m.m[2][1]
+				+ m.m[0][3] * m.m[1][1] * m.m[2][0] + m.m[0][1] * m.m[1][0] * m.m[2][3] + m.m[0][0] * m.m[1][3] * m.m[2][1]);
+
+
+		result.m[3][0] = (1.0f / d) *
+			(-m.m[1][0] * m.m[2][1] * m.m[3][2] - m.m[1][1] * m.m[2][2] * m.m[3][0] - m.m[1][2] * m.m[2][0] * m.m[3][1]
+				+ m.m[1][2] * m.m[2][1] * m.m[3][0] + m.m[1][1] * m.m[2][0] * m.m[3][2] + m.m[1][0] * m.m[2][2] * m.m[3][1]);
+		result.m[3][1] = (1.0f / d) *
+			(m.m[0][0] * m.m[2][1] * m.m[3][2] + m.m[0][1] * m.m[2][2] * m.m[3][0] + m.m[0][2] * m.m[2][0] * m.m[3][1]
+				- m.m[0][2] * m.m[2][1] * m.m[3][0] - m.m[0][1] * m.m[2][0] * m.m[3][2] - m.m[0][0] * m.m[2][2] * m.m[3][1]);
+		result.m[3][2] = (1.0f / d) *
+			(-m.m[0][0] * m.m[1][1] * m.m[3][2] - m.m[0][1] * m.m[1][2] * m.m[3][0] - m.m[0][2] * m.m[1][0] * m.m[3][1]
+				+ m.m[0][2] * m.m[1][1] * m.m[3][0] + m.m[0][1] * m.m[1][0] * m.m[3][2] + m.m[0][0] * m.m[1][2] * m.m[3][1]);
+		result.m[3][3] = (1.0f / d) *
+			(m.m[0][0] * m.m[1][1] * m.m[2][2] + m.m[0][1] * m.m[1][2] * m.m[2][0] + m.m[0][2] * m.m[1][0] * m.m[2][1]
+				- m.m[0][2] * m.m[1][1] * m.m[2][0] - m.m[0][1] * m.m[1][0] * m.m[2][2] - m.m[0][0] * m.m[1][2] * m.m[2][1]);
+
+	}
 
 	return result;
 
@@ -525,6 +635,121 @@ Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotate, const Ve
 	result.m[3][0] = T.m[3][0];
 	result.m[3][1] = T.m[3][1];
 	result.m[3][2] = T.m[3][2];
+	result.m[3][3] = 1.0f;
+
+	return result;
+
+}
+
+/// <summary>
+/// 正射影行列作成関数
+/// </summary>
+/// <param name="left"></param>
+/// <param name="top"></param>
+/// <param name="right"></param>
+/// <param name="bottom"></param>
+/// <param name="nearClip"></param>
+/// <param name="farClip"></param>
+/// <returns>正射影行列</returns>
+Matrix4x4 MakeOrthGraphicMatrix(float left, float top, float right, float bottom, float nearClip, float farClip) {
+
+	// 結果格納用
+	Matrix4x4 result;
+
+	result.m[0][0] = 2 / (right - left);
+	result.m[0][1] = 0.0f;
+	result.m[0][2] = 0.0f;
+	result.m[0][3] = 0.0f;
+
+	result.m[1][0] = 0.0f;
+	result.m[1][1] = 2 / (top - bottom);
+	result.m[1][2] = 0.0f;
+	result.m[1][3] = 0.0f;
+
+	result.m[2][0] = 0.0f;
+	result.m[2][1] = 0.0f;
+	result.m[2][2] = 1 / (farClip - nearClip);
+	result.m[2][3] = 0.0f;
+
+	result.m[3][0] = (left + right) / (left - right);
+	result.m[3][1] = (top + bottom) / (bottom - top);
+	result.m[3][2] = nearClip / (nearClip - farClip);
+	result.m[3][3] = 1.0f;
+
+	return result;
+
+}
+
+/// <summary>
+/// 透視射影行列作成関数
+/// </summary>
+/// <param name="fovY">画角</param>
+/// <param name="aspectRatio">アスペクト比</param>
+/// <param name="nearClip">近平面への距離</param>
+/// <param name="farClip">遠平面への距離</param>
+/// <returns>透視射影行列</returns>
+Matrix4x4 MakePerspectiveFovMatrix(float fovY, float aspectRatio, float nearClip, float farClip) {
+
+	// 結果格納用
+	Matrix4x4 result;
+
+	result.m[0][0] = (1 / aspectRatio) * (1 / tanf(fovY / 2));
+	result.m[0][1] = 0.0f;
+	result.m[0][2] = 0.0f;
+	result.m[0][3] = 0.0f;
+
+	result.m[1][0] = 0.0f;
+	result.m[1][1] = (1 / tanf(fovY / 2));
+	result.m[1][2] = 0.0f;
+	result.m[1][3] = 0.0f;
+
+	result.m[2][0] = 0.0f;
+	result.m[2][1] = 0.0f;
+	result.m[2][2] = farClip / (farClip - nearClip);
+	result.m[2][3] = 1.0f;
+
+	result.m[3][0] = 0.0f;
+	result.m[3][1] = 0.0f;
+	result.m[3][2] = -(nearClip * farClip) / (farClip - nearClip);
+	result.m[3][3] = 0.0f;
+
+	return result;
+
+}
+
+/// <summary>
+/// ビューポート変換行列
+/// </summary>
+/// <param name="left"></param>
+/// <param name="top"></param>
+/// <param name="width"></param>
+/// <param name="height"></param>
+/// <param name="minDepth"></param>
+/// <param name="maxDepth"></param>
+/// <returns>ビューポート行列</returns>
+Matrix4x4 MakeViewPortMatrix(float left, float top, float width, float height, float minDepth, float maxDepth) {
+
+	// 結果格納用
+	Matrix4x4 result;
+
+	result.m[0][0] = width / 2;
+	result.m[0][1] = 0.0f;
+	result.m[0][2] = 0.0f;
+	result.m[0][3] = 0.0f;
+
+	result.m[1][0] = 0.0f;
+	result.m[1][1] = -height / 2;
+	result.m[1][2] = 0.0f;
+	result.m[1][3] = 0.0f;
+
+	result.m[2][0] = 0.0f;
+	result.m[2][1] = 0.0f;
+	result.m[2][2] = maxDepth - minDepth;
+	result.m[2][3] = 0.0f;
+
+	result.m[3][0] = left + (width / 2);
+	result.m[3][1] = top + (height / 2);
+	result.m[3][2] = minDepth;
 	result.m[3][3] = 1.0f;
 
 	return result;
@@ -949,6 +1174,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	// Transform変数を作る
 	Transform transform{ {1.0f, 1.0f, 1.0f},{0.0f, 0.0f, 0.0f},{0.0f, 0.0f, 0.0f} };
+	Transform cameraTransform{ {1.0f, 1.0f, 1.0f},{0.0f,0.0f, 0.0f},{0.0f, 0.0f, -5.0f} };
 
 	MSG msg{};
 
@@ -964,8 +1190,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			// Y軸回転
 			transform.rotate.y += 0.03f;
+
 			Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
-			*wvpData = worldMatrix;
+			Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translate);
+			Matrix4x4 viewMatrix = Inverse(cameraMatrix);
+			Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
+			Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+			
+			*wvpData = worldViewProjectionMatrix;
 
 			// これから書き込むバックバッファのインデックスを取得
 			UINT backBufferIndex = swapChain->GetCurrentBackBufferIndex();
