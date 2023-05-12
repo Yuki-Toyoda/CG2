@@ -1262,6 +1262,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// 単位行列を書き込んでおく
 	*wvpData = MakeIdentity4x4();
 
+	// Transform周り
+	ID3D12Resource* transformationMatrixResourceSprite = CreateBufferResource(device, sizeof(Matrix4x4));
+	// データの書き込み
+	Matrix4x4* transformationMatrixDataSprite = nullptr;
+	// 書き込むためのアドレスを取得
+	transformationMatrixResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&transformationMatrixDataSprite));
+	// 単位行列を書き込んでおく
+	*transformationMatrixDataSprite = MakeIdentity4x4();
+
 	// シリアライズしてバイナリにする
 	ID3DBlob* signatureBlob = nullptr;
 	ID3DBlob* errorBlob = nullptr;
@@ -1411,6 +1420,36 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	vertexData[5].position = { 0.5f, -0.5f, -0.5f, 1.0f };
 	vertexData[5].texcoord = { 1.0f,1.0f };
 
+	// Sprite用の頂点リソースを作る
+	ID3D12Resource* vertexResourceSprite = CreateBufferResource(device, sizeof(VertexData) * 6);
+
+	// 頂点バッファビューを作成する
+	D3D12_VERTEX_BUFFER_VIEW vertexBufferViewSprite{};
+	// リソースの先頭アドレスから使う
+	vertexBufferViewSprite.BufferLocation = vertexResourceSprite->GetGPUVirtualAddress();
+	// 使用するリソースのサイズは頂点6つ分のサイズ
+	vertexBufferViewSprite.SizeInBytes = sizeof(VertexData) * 6;
+	// 1頂点辺りのサイズ
+	vertexBufferViewSprite.StrideInBytes = sizeof(VertexData);
+
+	// 頂点データ
+	VertexData* vertexDataSplite = nullptr;
+	vertexResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataSplite));
+	// 1枚目の三角形
+	vertexDataSplite[0].position = { 0.0f, 360.0f, 0.0f, 1.0f }; // 左下
+	vertexDataSplite[0].texcoord = { 0.0f, 1.0f };
+	vertexDataSplite[1].position = { 0.0f, 0.0f, 0.0f, 1.0f }; // 左上
+	vertexDataSplite[1].texcoord = { 0.0f, 0.0f };
+	vertexDataSplite[2].position = { 640.0f, 360.0f, 0.0f, 1.0f }; // 右下
+	vertexDataSplite[2].texcoord = { 1.0f, 1.0f };
+	// 二枚目の三角形
+	vertexDataSplite[3].position = { 0.0f, 0.0f, 0.0f, 1.0f }; // 左上
+	vertexDataSplite[3].texcoord = { 0.0f, 0.0f };
+	vertexDataSplite[4].position = { 640.0f, 0.0f, 0.0f, 1.0f }; // 右下
+	vertexDataSplite[4].texcoord = { 1.0f, 0.0f };
+	vertexDataSplite[5].position = { 640.0f, 360.0f, 0.0f, 1.0f }; // 右下
+	vertexDataSplite[5].texcoord = { 1.0f, 1.0f };
+
 	// ビューポート
 	D3D12_VIEWPORT viewport{};
 	// クライアント領域のサイズと一緒にして画面全体に表示
@@ -1432,6 +1471,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// Transform変数を作る
 	Transform transform{ {1.0f, 1.0f, 1.0f},{0.0f, 0.0f, 0.0f},{0.0f, 0.0f, 0.0f} };
 	Transform cameraTransform{ {1.0f, 1.0f, 1.0f},{0.0f,0.0f, 0.0f},{0.0f, 0.0f, -5.0f} };
+
+	// スプライト用トランスフォーム
+	Transform transformSplite{ {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} };
 
 	// ImGuiの初期化
 	IMGUI_CHECKVERSION();
@@ -1512,6 +1554,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			
 			*wvpData = worldViewProjectionMatrix;
 
+			Matrix4x4 worldMatrixSplite = MakeAffineMatrix(transformSplite.scale, transformSplite.rotate, transformSplite.translate);
+			Matrix4x4 viewMatrixSplite = MakeIdentity4x4();
+			Matrix4x4 projectionMatrixSplite = MakeOrthGraphicMatrix(0.0f, 0.0f, float(kClientWidth), float(kClientHeight), 0.0f, 100.0f);
+			Matrix4x4 worldViewProjectionMatrixSplite = Multiply(worldMatrixSplite, Multiply(viewMatrixSplite, projectionMatrixSplite));
+
+			*transformationMatrixDataSprite = worldViewProjectionMatrixSplite;
+
 			// ImGuiの内部コマンドを生成する
 			ImGui::Render();
 
@@ -1565,6 +1614,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHadleGPU);
 
 			// 描画！ (DrawCall/ドローコール)　3頂点で1つのインスタンス
+			commandList->DrawInstanced(6, 1, 0, 0);
+
+			// Spriteの描画
+			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite); // VBVを設定
+			// TransformationMatrixCBufferの場所を設定
+			commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResourceSprite->GetGPUVirtualAddress());
+			// 描画
 			commandList->DrawInstanced(6, 1, 0, 0);
 
 			// 実際にcommandListのImGuiの描画コマンドをよむ
@@ -1635,10 +1691,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	dxgiFactory->Release();
 
 	vertexResource->Release();
+	vertexResourceSprite->Release();
+
 	materialResource->Release();
 	textureResource->Release();
 	depthStencilResource->Release();
 	wvpResource->Release();
+	transformationMatrixResourceSprite->Release();
 	intermediateResource->Release();
 	graphicsPipelineState->Release();
 	signatureBlob->Release();
