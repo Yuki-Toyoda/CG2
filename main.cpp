@@ -1386,8 +1386,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	ID3D12Resource* intermediateResource = UploadTextureData(textureResource, mipImages, device, commandList);
 
-	UploadTextureData(intermediateResource, mipImages);
-
 	// metaDataを元にSRVの設定
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 	srvDesc.Format = metadata.format;
