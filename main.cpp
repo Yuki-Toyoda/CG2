@@ -77,6 +77,7 @@ struct TransformM {
 struct VertexData {
 	Vector4 position;
 	Vector2 texcoord;
+	Vector3 normal;
 };
 
 // ウィンドウプロシージャ
@@ -1363,7 +1364,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	assert(SUCCEEDED(hr));
 
 	// InputLayout
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[2] = {};
+	D3D12_INPUT_ELEMENT_DESC inputElementDescs[3] = {};
 	inputElementDescs[0].SemanticName = "POSITION";
 	inputElementDescs[0].SemanticIndex = 0;
 	inputElementDescs[0].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -1372,6 +1373,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	inputElementDescs[1].SemanticIndex = 0;
 	inputElementDescs[1].Format = DXGI_FORMAT_R32G32_FLOAT;
 	inputElementDescs[1].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
+	inputElementDescs[2].SemanticName = "NORMAL";
+	inputElementDescs[2].SemanticIndex = 0;
+	inputElementDescs[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	inputElementDescs[2].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc{};
 	inputLayoutDesc.pInputElementDescs = inputElementDescs;
 	inputLayoutDesc.NumElements = _countof(inputElementDescs);
@@ -1516,6 +1521,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			vertexData[start].position.w = 1.0f;
 			vertexData[start].texcoord.x = float(lonIndex) / float(kSubdivison);
 			vertexData[start].texcoord.y = 1.0f - float(latIndex) / float(kSubdivison);
+			vertexData[start].normal.x = vertexData[start].position.x;
+			vertexData[start].normal.y = vertexData[start].position.y;
+			vertexData[start].normal.z = vertexData[start].position.z;
 
 			vertexData[start + 1].position.x = cosf(lat + kLatEvery) * cosf(lon);
 			vertexData[start + 1].position.y = sinf(lat + kLatEvery);
@@ -1523,6 +1531,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			vertexData[start + 1].position.w = 1.0f;
 			vertexData[start + 1].texcoord.x = float(lonIndex) / float(kSubdivison);
 			vertexData[start + 1].texcoord.y = 1.0f - float(latIndex) / float(kSubdivison);
+			vertexData[start + 1].normal.x = vertexData[start + 1].position.x;
+			vertexData[start + 1].normal.y = vertexData[start + 1].position.y;
+			vertexData[start + 1].normal.z = vertexData[start + 1].position.z;
 
 			vertexData[start + 2].position.x = cosf(lat) * cosf(lon + kLonEvery);
 			vertexData[start + 2].position.y = sinf(lat);
@@ -1530,6 +1541,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			vertexData[start + 2].position.w = 1.0f;
 			vertexData[start + 2].texcoord.x = float(lonIndex) / float(kSubdivison);
 			vertexData[start + 2].texcoord.y = 1.0f - float(latIndex) / float(kSubdivison);
+			vertexData[start + 2].normal.x = vertexData[start + 2].position.x;
+			vertexData[start + 2].normal.y = vertexData[start + 2].position.y;
+			vertexData[start + 2].normal.z = vertexData[start + 2].position.z;
 
 			vertexData[start + 3].position.x = cosf(lat) * cosf(lon + kLonEvery);
 			vertexData[start + 3].position.y = sinf(lat);
@@ -1537,6 +1551,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			vertexData[start + 3].position.w = 1.0f;
 			vertexData[start + 3].texcoord.x = float(lonIndex) / float(kSubdivison);
 			vertexData[start + 3].texcoord.y = 1.0f - float(latIndex) / float(kSubdivison);
+			vertexData[start + 3].normal.x = vertexData[start + 3].position.x;
+			vertexData[start + 3].normal.y = vertexData[start + 3].position.y;
+			vertexData[start + 3].normal.z = vertexData[start + 3].position.z;
 
 			vertexData[start + 4].position.x = cosf(lat + kLatEvery) * cosf(lon);
 			vertexData[start + 4].position.y = sinf(lat + kLatEvery);
@@ -1544,6 +1561,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			vertexData[start + 4].position.w = 1.0f;
 			vertexData[start + 4].texcoord.x = float(lonIndex) / float(kSubdivison);
 			vertexData[start + 4].texcoord.y = 1.0f - float(latIndex) / float(kSubdivison);
+			vertexData[start + 4].normal.x = vertexData[start + 4].position.x;
+			vertexData[start + 4].normal.y = vertexData[start + 4].position.y;
+			vertexData[start + 4].normal.z = vertexData[start + 4].position.z;
 
 			vertexData[start + 5].position.x = cosf(lat + kLatEvery) * cosf(lon + kLonEvery);
 			vertexData[start + 5].position.y = sinf(lat + kLatEvery);
@@ -1551,6 +1571,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			vertexData[start + 5].position.w = 1.0f;
 			vertexData[start + 5].texcoord.x = float(lonIndex) / float(kSubdivison);
 			vertexData[start + 5].texcoord.y = 1.0f - float(latIndex) / float(kSubdivison);
+			vertexData[start + 5].normal.x = vertexData[start + 5].position.x;
+			vertexData[start + 5].normal.y = vertexData[start + 5].position.y;
+			vertexData[start + 5].normal.z = vertexData[start + 5].position.z;
 
 		}
 	}
@@ -1573,17 +1596,23 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// 1枚目の三角形
 	vertexDataSplite[0].position = { 0.0f, 360.0f, 0.0f, 1.0f }; // 左下
 	vertexDataSplite[0].texcoord = { 0.0f, 1.0f };
+	vertexDataSplite[0].normal = { 0.0f, 0.0f, -1.0f };
 	vertexDataSplite[1].position = { 0.0f, 0.0f, 0.0f, 1.0f }; // 左上
 	vertexDataSplite[1].texcoord = { 0.0f, 0.0f };
+	vertexDataSplite[1].normal = { 0.0f, 0.0f, -1.0f };
 	vertexDataSplite[2].position = { 640.0f, 360.0f, 0.0f, 1.0f }; // 右下
 	vertexDataSplite[2].texcoord = { 1.0f, 1.0f };
+	vertexDataSplite[2].normal = { 0.0f, 0.0f, -1.0f };
 	// 二枚目の三角形
 	vertexDataSplite[3].position = { 0.0f, 0.0f, 0.0f, 1.0f }; // 左上
 	vertexDataSplite[3].texcoord = { 0.0f, 0.0f };
+	vertexDataSplite[3].normal = { 0.0f, 0.0f, -1.0f };
 	vertexDataSplite[4].position = { 640.0f, 0.0f, 0.0f, 1.0f }; // 右下
 	vertexDataSplite[4].texcoord = { 1.0f, 0.0f };
+	vertexDataSplite[4].normal = { 0.0f, 0.0f, -1.0f };
 	vertexDataSplite[5].position = { 640.0f, 360.0f, 0.0f, 1.0f }; // 右下
 	vertexDataSplite[5].texcoord = { 1.0f, 1.0f };
+	vertexDataSplite[5].normal = { 0.0f, 0.0f, -1.0f };
 
 	// ビューポート
 	D3D12_VIEWPORT viewport{};
